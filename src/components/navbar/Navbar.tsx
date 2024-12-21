@@ -1,6 +1,15 @@
+import { Dispatch, SetStateAction } from "react";
 import { motion } from "framer-motion";
 import { FaMapMarkerAlt, FaSearch } from "react-icons/fa";
 import { FaPersonHiking } from "react-icons/fa6";
+
+interface NavbarProps {
+    openSearch: boolean;
+    setOpenSearch: Dispatch<SetStateAction<boolean>>;
+    setOpenPlaceCard: Dispatch<SetStateAction<boolean>>;
+    openTrip: boolean;
+    setOpenTrip: Dispatch<SetStateAction<boolean>>;
+}
 
 export default function Navbar({
     openSearch,
@@ -8,7 +17,7 @@ export default function Navbar({
     setOpenPlaceCard,
     openTrip,
     setOpenTrip,
-}) {
+}: NavbarProps) {
     const handleOpenMap = () => {
         setOpenSearch(false);
         setOpenPlaceCard(false);

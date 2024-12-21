@@ -1,5 +1,18 @@
 import { motion } from "framer-motion";
-import { useState } from "react";
+import { ChangeEvent, Dispatch, SetStateAction, useState } from "react";
+import { IPositions } from "../../interfaces/search/interface";
+
+interface SearchProps {
+    positions: IPositions[];
+    valueLocation: string;
+    valueName: string;
+    setValueLocation: Dispatch<SetStateAction<string>>;
+    setValueName: Dispatch<SetStateAction<string>>;
+    setZoomLocationX: Dispatch<SetStateAction<number>>;
+    setZoomLocationY: Dispatch<SetStateAction<number>>;
+    setSelectedPosition: Dispatch<SetStateAction<number | null>>;
+    setOpenPlaceCard: Dispatch<SetStateAction<boolean>>;
+}
 
 export default function Search({
     positions,
@@ -11,15 +24,15 @@ export default function Search({
     setZoomLocationY,
     setSelectedPosition,
     setOpenPlaceCard,
-}) {
-    const [dropdownVisible, setDropdownVisible] = useState(false);
-    const [selectedCategories, setSelectedCategories] = useState([]);
+}: SearchProps) {
+    const [dropdownVisible, setDropdownVisible] = useState<boolean>(false);
+    const [selectedCategories, setSelectedCategories] = useState<string[]>([]);
 
-    const handleChangeLocation = (e) => {
+    const handleChangeLocation = (e: ChangeEvent<HTMLInputElement>) => {
         setValueLocation(e.target.value.toLowerCase());
     };
 
-    const handleChangeName = (e) => {
+    const handleChangeName = (e: ChangeEvent<HTMLInputElement>) => {
         setValueName(e.target.value.toLowerCase());
     };
 
@@ -27,7 +40,7 @@ export default function Search({
         setDropdownVisible(!dropdownVisible);
     };
 
-    const handleCategoryChange = (category) => {
+    const handleCategoryChange = (category: string) => {
         setSelectedCategories((prevSelected) =>
             prevSelected.includes(category)
                 ? prevSelected.filter((cat) => cat !== category)
@@ -35,7 +48,7 @@ export default function Search({
         );
     };
 
-    const handleZoomLocation = (x, y, key) => {
+    const handleZoomLocation = (x: number, y: number, key: number) => {
         setZoomLocationX(x);
         setZoomLocationY(y);
         setSelectedPosition(key);

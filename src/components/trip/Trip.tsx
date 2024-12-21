@@ -1,14 +1,18 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, Dispatch, SetStateAction } from "react";
 import { motion } from "framer-motion";
 import { MdDirectionsBike, MdError } from "react-icons/md";
-import {
-    FaCar,
-    FaWalking,
-    FaInfoCircle,
-    FaLongArrowAltDown,
-} from "react-icons/fa";
+import { FaCar, FaWalking, FaInfoCircle } from "react-icons/fa";
 import L from "leaflet";
 import "leaflet-routing-machine";
+import {
+    IDatesMap,
+    IDatesStorage,
+    IPositions,
+    IRouteSegments,
+    ISortedDates,
+} from "../../interfaces/trip/interface";
+import PlaceCardForNavigation from "./placeCardForNavigation/PlaceCardForNavigation";
+import RouteInfo from "./routeInfo/RouteInfo";
 
 const animationVariants = {
     whileHover: {
@@ -20,6 +24,21 @@ const animationVariants = {
         transition: { duration: 0.1 },
     },
 };
+
+interface TripProps {
+    positions: IPositions[];
+    datesStorage: IDatesStorage;
+    showRoute: boolean;
+    setShowRoute: Dispatch<SetStateAction<boolean>>;
+    routingControl: L.Routing.Control | null;
+    setRoutingControl: Dispatch<SetStateAction<L.Routing.Control | null>>;
+    transportMode: string;
+    setTransportMode: Dispatch<SetStateAction<string>>;
+    sortedDates: ISortedDates[];
+    setSortedDates: Dispatch<SetStateAction<ISortedDates[]>>;
+    routeBlocked: boolean;
+    setRouteBlocked: Dispatch<SetStateAction<boolean>>;
+}
 
 export default function Trip({
     positions,
@@ -34,24 +53,24 @@ export default function Trip({
     setSortedDates,
     routeBlocked,
     setRouteBlocked,
-}) {
-    const [isRoute, setIsRoute] = useState(null);
-    const [routeSegments, setRouteSegments] = useState([]);
-    const [routeTime, setRouteTime] = useState([]);
-    const [routeDistance, setRouteDistance] = useState([]);
+}: TripProps) {
+    const [isRoute, setIsRoute] = useState<string | null>(null);
+    const [routeSegments, setRouteSegments] = useState<IRouteSegments[]>([]);
+    const [routeTime, setRouteTime] = useState<string[]>([]);
+    const [routeDistance, setRouteDistance] = useState<string[]>([]);
 
     useEffect(() => {
-        const datesMap = {};
+        const datesMap: IDatesMap = {};
 
         Object.keys(datesStorage).forEach((positionId) => {
-            const dates = datesStorage[positionId];
+            const dates = datesStorage[+positionId];
             dates.forEach((dateObj) => {
                 if (dateObj.active) {
                     if (!datesMap[dateObj.date]) {
                         datesMap[dateObj.date] = [];
                     }
 
-                    datesMap[dateObj.date].push(positions[positionId]);
+                    datesMap[dateObj.date].push(positions[+positionId]);
                 }
             });
         });
@@ -61,8 +80,8 @@ export default function Trip({
                 const [dayA, monthA] = a.split("/").map(Number);
                 const [dayB, monthB] = b.split("/").map(Number);
                 return (
-                    new Date(2024, monthA - 1, dayA) -
-                    new Date(2024, monthB - 1, dayB)
+                    new Date(2024, monthA - 1, dayA).getTime() -
+                    new Date(2024, monthB - 1, dayB).getTime()
                 );
             })
             .map((date) => ({ date, places: datesMap[date] }));
@@ -70,7 +89,7 @@ export default function Trip({
         setSortedDates(sortedDatesArray);
     }, [datesStorage, positions, setSortedDates]);
 
-    const handleNavigation = async (places, date) => {
+    const handleNavigation = async (places: IPositions[], date: string) => {
         setIsRoute(null);
         setRouteSegments([]);
         setRouteBlocked(false);
@@ -96,8 +115,10 @@ export default function Trip({
             waypoints,
             lineOptions: {
                 styles: [{ color: "#6FA1EC", weight: 4 }],
+                extendToWaypoints: false,
+                missingRouteTolerance: 0,
             },
-            createMarker: () => null,
+            // createMarker: () => null,
             routeWhileDragging: false,
             addWaypoints: false,
             router: L.Routing.mapbox(
@@ -127,31 +148,37 @@ export default function Trip({
 
             let distanceInstructions = 0;
             let timeInstructions = 0;
-            let resultDistanceInstructions = [];
-            let resultTimeInstructions = [];
+            const resultDistanceInstructions = [];
+            const resultTimeInstructions = [];
 
             setRouteTime([]);
             setRouteDistance([]);
 
-            route.instructions.forEach((obj) => {
-                timeInstructions += obj.time;
-                distanceInstructions += obj.distance;
+            route.instructions.forEach(
+                (obj: { time: number; distance: number; type: string }) => {
+                    timeInstructions += obj.time;
+                    distanceInstructions += obj.distance;
 
-                if (obj.type === "WaypointReached") {
-                    resultDistanceInstructions.push(
-                        (distanceInstructions / 1000).toFixed(2),
-                    );
-                    resultTimeInstructions.push(convertTime(timeInstructions));
+                    if (obj.type === "WaypointReached") {
+                        resultDistanceInstructions.push(
+                            (distanceInstructions / 1000).toFixed(2),
+                        );
+                        resultTimeInstructions.push(
+                            convertTime(timeInstructions),
+                        );
 
-                    distanceInstructions = 0;
-                    timeInstructions = 0;
-                }
-            });
+                        distanceInstructions = 0;
+                        timeInstructions = 0;
+                    }
+                },
+            );
 
             resultDistanceInstructions.push(
                 (distanceInstructions / 1000).toFixed(2),
             );
             resultTimeInstructions.push(convertTime(timeInstructions));
+
+            console.log(resultDistanceInstructions);
 
             setRouteTime(resultTimeInstructions);
             setRouteDistance(resultDistanceInstructions);
@@ -169,7 +196,7 @@ export default function Trip({
         window.map.fitBounds(L.latLngBounds(waypoints));
     };
 
-    const convertTime = (totalSeconds) => {
+    const convertTime = (totalSeconds: number): string => {
         const totalMinutes = totalSeconds / 60;
         const hours = Math.floor(totalMinutes / 60);
         const minutes = Math.round(totalMinutes % 60);
@@ -275,71 +302,6 @@ export default function Trip({
                     </div>
                 )}
             </div>
-        </div>
-    );
-}
-
-function PlaceCardForNavigation({ place, convertTime }) {
-    return (
-        <div className="place-card_trip">
-            <img
-                src={place.img}
-                alt={place.name}
-                className="w-full h-36 object-cover rounded-t-lg"
-            />
-            <div className="flex flex-col justify-between p-4 leading-normal">
-                <h3 className="place-card-paragraph_trip">{place.name}</h3>
-                <p className="place-card-paragraph_trip italic">
-                    {place.location}
-                </p>
-                <p className="place-card-paragraph_trip">
-                    Category: {place.category}
-                </p>
-                <p className="place-card-paragraph_trip">
-                    Time spent: ≈{convertTime(place.time)} hours
-                </p>
-            </div>
-        </div>
-    );
-}
-
-function RouteInfo({ index, routeDistance, routeTime }) {
-    return (
-        <div className="route-info">
-            <ul>
-                <li key={index + 1200} className="mb-2">
-                    {routeDistance.map((distance, indexDistance) => {
-                        if (indexDistance === index) {
-                            return (
-                                <div
-                                    key={indexDistance}
-                                    className="grid place-items-center"
-                                >
-                                    <FaLongArrowAltDown className="route-info-icon_trip" />
-                                    <p className="route-info-paragraph_trip">
-                                        Total distance: {distance} km
-                                    </p>
-                                </div>
-                            );
-                        }
-                    })}
-                    {routeTime.map((time, indexTime) => {
-                        if (indexTime === index) {
-                            return (
-                                <div
-                                    key={indexTime}
-                                    className="grid place-items-center"
-                                >
-                                    <p className="route-info-paragraph_trip">
-                                        Total time: {time} hours
-                                    </p>
-                                    <FaLongArrowAltDown className="route-info-icon_trip" />
-                                </div>
-                            );
-                        }
-                    })}
-                </li>
-            </ul>
         </div>
     );
 }

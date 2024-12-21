@@ -1,11 +1,15 @@
 import { useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
+import "../style/index.scss";
+import L from "leaflet";
+import { IDates, IDatesStorage, ISortedDates } from "../interfaces/interface";
+
 import Map from "./map/Map";
 import Navbar from "./navbar/Navbar";
 import Search from "./search/Search";
 import PlaceCard from "./placeCard/PlaceCard";
 import Trip from "./trip/Trip";
-import DarkModeBtn from "./darkModeBtn/DarkModeBtn";
+import DarkModeBtn from "./ui/darkModeBtn/DarkModeBtn";
 
 const positions = [
     {
@@ -160,23 +164,26 @@ const animationSettings = {
 };
 
 export default function App() {
-    const [openSearch, setOpenSearch] = useState(false);
-    const [valueLocation, setValueLocation] = useState("");
-    const [valueName, setValueName] = useState("");
-    const [zoomLocationX, setZoomLocationX] = useState(52.083);
-    const [zoomLocationY, setZoomLocationY] = useState(19.375);
-    const [selectedPosition, setSelectedPosition] = useState(null);
-    const [openPlaceCard, setOpenPlaceCard] = useState(false);
-    const [datesStorage, setDatesStorage] = useState({});
-    const [openTrip, setOpenTrip] = useState(false);
-    const [showRoute, setShowRoute] = useState(false);
-    const [transportMode, setTransportMode] = useState("car");
-    const [routingControl, setRoutingControl] = useState(null);
-    const [sortedDates, setSortedDates] = useState([]);
-    const [routeBlocked, setRouteBlocked] = useState(false);
-    const [dates, setDates] = useState([]);
+    const [openSearch, setOpenSearch] = useState<boolean>(false);
+    const [valueLocation, setValueLocation] = useState<string>("");
+    const [valueName, setValueName] = useState<string>("");
+    const [zoomLocationX, setZoomLocationX] = useState<number>(52.083);
+    const [zoomLocationY, setZoomLocationY] = useState<number>(19.375);
+    const [selectedPosition, setSelectedPosition] = useState<number | null>(
+        null,
+    );
+    const [openPlaceCard, setOpenPlaceCard] = useState<boolean>(false);
+    const [datesStorage, setDatesStorage] = useState<IDatesStorage>({});
+    const [openTrip, setOpenTrip] = useState<boolean>(false);
+    const [showRoute, setShowRoute] = useState<boolean>(false);
+    const [transportMode, setTransportMode] = useState<string>("car");
+    const [routingControl, setRoutingControl] =
+        useState<L.Routing.Control | null>(null);
+    const [sortedDates, setSortedDates] = useState<ISortedDates[]>([]);
+    const [routeBlocked, setRouteBlocked] = useState<boolean>(false);
+    const [dates, setDates] = useState<IDates[]>([]);
 
-    const updateDatesStorage = (markerId, dates) => {
+    const updateDatesStorage = (markerId: number, dates: IDates[]) => {
         setDatesStorage((prevState) => ({
             ...prevState,
             [markerId]: dates,
@@ -213,12 +220,8 @@ export default function App() {
                                 setValueName={setValueName}
                                 setZoomLocationX={setZoomLocationX}
                                 setZoomLocationY={setZoomLocationY}
-                                selectedPosition={selectedPosition}
                                 setSelectedPosition={setSelectedPosition}
-                                openPlaceCard={openPlaceCard}
                                 setOpenPlaceCard={setOpenPlaceCard}
-                                datesStorage={datesStorage}
-                                updateDatesStorage={updateDatesStorage}
                             />
                             {openPlaceCard && (
                                 <PlaceCard
@@ -252,7 +255,6 @@ export default function App() {
                                 setRoutingControl={setRoutingControl}
                                 transportMode={transportMode}
                                 setTransportMode={setTransportMode}
-                                setDatesStorage={setDatesStorage}
                                 sortedDates={sortedDates}
                                 setSortedDates={setSortedDates}
                                 routeBlocked={routeBlocked}

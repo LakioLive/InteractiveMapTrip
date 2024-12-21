@@ -2,7 +2,12 @@ import { motion } from "framer-motion";
 import { FaCity, FaPlusCircle } from "react-icons/fa";
 import { IoArrowBack } from "react-icons/io5";
 import { BiSolidCategory } from "react-icons/bi";
-import { useEffect } from "react";
+import { Dispatch, SetStateAction, useEffect } from "react";
+import {
+    IDates,
+    IDatesStorage,
+    IPositions,
+} from "../../interfaces/placeCard/interface";
 
 const animationVariants = {
     whileHover: {
@@ -15,6 +20,17 @@ const animationVariants = {
     },
 };
 
+interface PlaceCardProps {
+    positions: IPositions[];
+    selectedPosition: number | null;
+    setOpenPlaceCard: Dispatch<SetStateAction<boolean>>;
+    datesStorage: IDatesStorage;
+    updateDatesStorage: (markerId: number, dates: IDates[]) => void;
+    setRouteBlocked: Dispatch<SetStateAction<boolean>>;
+    dates: IDates[];
+    setDates: Dispatch<SetStateAction<IDates[]>>;
+}
+
 export default function PlaceCard({
     positions,
     selectedPosition,
@@ -24,10 +40,10 @@ export default function PlaceCard({
     setRouteBlocked,
     dates,
     setDates,
-}) {
+}: PlaceCardProps) {
     const todayDate = new Date();
     const formattedTodayDate = `${todayDate.getDate() < 10 ? "0" + todayDate.getDate() : todayDate.getDate()}/${todayDate.getMonth() + 1 < 10 ? "0" + (todayDate.getMonth() + 1) : todayDate.getMonth() + 1}`;
-    const positionId = selectedPosition - 1;
+    const positionId = selectedPosition !== null ? selectedPosition - 1 : 0;
 
     useEffect(() => {
         setDates(datesStorage[positionId] || []);
@@ -63,7 +79,7 @@ export default function PlaceCard({
         updateDatesStorage(positionId, newDates);
     };
 
-    const handleActivateDate = (id) => {
+    const handleActivateDate = (id: number) => {
         const updatedDates = dates.map((dateObj) => {
             if (dateObj.id === id) {
                 return { ...dateObj, active: !dateObj.active };
